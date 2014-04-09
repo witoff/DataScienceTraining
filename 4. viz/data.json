@@ -1,0 +1,32 @@
+[
+  {
+    "domain" : "sitea",
+    "size" : 5,
+    "keywords" : ["one", "two"],
+    "polarity" : 1
+  },
+  {
+    "domain" : "siteb",
+    "size" : 10,
+    "keywords" : ["two", "three"],
+    "polarity" : 0
+  },
+  {
+    "domain" : "sitec",
+    "size" : 5,
+    "keywords" : ["three", "one"],
+    "polarity" : 1
+  },
+  {
+    "domain" : "sited",
+    "size" : 10,
+    "keywords" : ["bad", "mad"],
+    "polarity" : -1
+  },
+  {
+    "domain" : "sitee",
+    "size" : 5,
+    "keywords" : ["bad", "bad"],
+    "polarity" : -0.1
+  }
+]

@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+<style>
+
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.link {
+  stroke: #999;
+  stroke-opacity: .6;
+}
+.title {
+  font-family: monospace;
+  font-size: 22pt;
+  margin: 10px;
+}
+
+</style>
+<title>Data Graph</title>
+</head>
+<body>
+  <div class="title">Sentiment Visualization Graph</div>
+<script src="d3.v3.min.js"></script>
+<script>
+
+var width = 960,
+    height = 500;
+
+var color = d3.scale.category20();
+
+var force = d3.layout.force()
+    .charge(-120)
+    .linkDistance(30)
+    .size([width, height]);
+
+var svg = d3.select("body").append("svg")
+    .attr("width", width)
+    .attr("height", height);
+
+function createLinks(nodes) {
+  var links = [];
+
+  // Build inverse keyword -> node object
+  var inversion = {};
+  for (var i in nodes) {
+
+    var n = nodes[i];
+    for (var k_i in n.keywords) {
+      var k = n.keywords[k_i];
+      if (k in inversion)
+        inversion[k].push(i);
+      else
+        inversion[k] = [i];
+    }
+  }
+
+  console.log('inversion', inversion)
+
+  // Build Links
+  var links = [];
+  for (var i in nodes) {
+    var n = nodes[i];
+
+    for (var k_i in n.keywords) {
+      var k = n.keywords[k_i];
+
+      for (var r_i in inversion[k]) {
+        var index = inversion[k][r_i]
+        if (index === i)
+          continue;
+        else
+          links.push({"source":parseInt(i),"target":parseInt(index),"value":1})
+      }
+    }
+  }
+  console.log('links:', links);
+
+  return links
+}
+
+d3.json("visual_sentiment.json", function(error, nodes) {
+
+  //Don't show more than 100 nodes
+  nodes = nodes.slice(0,100);
+
+  var links = createLinks(nodes);
+
+  console.log(nodes, links);
+  force
+      .nodes(nodes)
+      .links(links)
+      .start();
+
+
+  var link = svg.selectAll(".link")
+      .data(links)
+    .enter().append("line")
+      .attr("class", "link")
+      .style("stroke-width", function(d) { return Math.sqrt(d.value); });
+
+  function getColor(d) {
+    var color = d3.scale.sqrt()
+    .domain([-1, 0, 1])
+    .range(["red", "white", "green"]);
+    return color(d.polarity)
+  }
+
+  var max_size = 0;
+  for (var i in nodes)
+    max_size = Math.max(nodes[i].size, max_size)
+
+  var node = svg.selectAll(".node")
+      .data(nodes)
+    .enter().append("circle")
+      .attr("class", "node")
+      .attr("r", function (d) {
+        return Math.max(4, d.size/max_size * 20)
+      })
+      .attr('stroke', 'black')
+      .attr("stroke-width", "2")
+      .style("fill", getColor)
+      .call(force.drag);
+
+	  //Add the SVG Text Element to the svgContainer
+	  var text = svg.selectAll("text")
+	                          .data(nodes)
+	                          .enter()
+	                          .append("text");
+
+
+
+  node.append("title")
+      .text(function(d) { return d.keywords.join(' '); });
+
+  force.on("tick", function() {
+    link.attr("x1", function(d) { return d.source.x; })
+        .attr("y1", function(d) { return d.source.y; })
+        .attr("x2", function(d) { return d.target.x; })
+        .attr("y2", function(d) { return d.target.y; });
+
+    node.attr("cx", function(d) { return d.x; })
+        .attr("cy", function(d) { return d.y; });
+	  text
+        .attr("x", function(d) { return d.x; })
+        .attr("y", function(d) { return d.y; })
+        .text( function(d) { return d.domain})
+        .attr("font-family", "sans-serif")
+        .attr("font-size", "8px")
+        .attr("fill", "black");
+  });
+});
+
+</script>
+</body>
+</html>
